@@ -1,0 +1,44 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">Risk Assesment PDF</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        @foreach (var page in Pages)
+        {
+            var link = page.Link;
+            var text = page.Text;
+            <li class="nav-item px-4">
+                <NavLink class="nav-link" href="@link" Match="NavLinkMatch.All" @onclick="() => HandleClick(page)">
+                    <span class="oi oi-chevron-right" aria-hidden="true"></span> @text
+                </NavLink>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    @inject NavigationManager NavigationManager;
+
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private List<Page> Pages { get; set; } = new List<Page>
+{
+        new Page {Id = 1, Link = "", Text="Risk Assesment PDF"},
+    };
+
+    private void HandleClick(Page page)
+    {
+        NavigationManager.NavigateTo(page.Link, true);
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
