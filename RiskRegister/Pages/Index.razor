@@ -51,7 +51,6 @@
                     {
                         <button class="btn btn-primary" @onclick="@(e=> DeletePDF(@risk.Id))">Delete PDF</button>
                         <button class="btn btn-primary" @onclick="@(e=> SelectPDF(@risk))">View PDF</button>
-                        // <button id="showPDF" value="System.Convert.ToBase64String(@risk.PDF)"@onclick= "@(e=> SelectAPIPDF(@risk))" class="btn btn-primary">View PDF(ADOBE API)</button>
                     }
                     <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk.Id))">Delete Item</button>
                 </td>
@@ -80,13 +79,17 @@
     List<RiskAssesmentPDF> Risks = new List<RiskAssesmentPDF>();
     string pdfName = "";
     string pdfContent = "";
-    string pdfContentAPI = "";
-    MemoryStream stream;
-    System.Threading.Tasks.ValueTask placeholder;
 
     protected override async Task OnInitializedAsync()
     {
         getAllRiskAssesmentPDFS();
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        jsRuntime.InvokeVoidAsync("HideShowIframe");
+        return base.OnAfterRenderAsync(firstRender);
+
     }
 
     private void getAllRiskAssesmentPDFS()
@@ -133,6 +136,7 @@
     private async Task DeleteItem(int PDFID)
     {
         await PDFService.DeleteObject(PDFID);
+        await jsRuntime.InvokeVoidAsync("HideIframeOnDelete");
         getAllRiskAssesmentPDFS();
     }
 
@@ -147,21 +151,9 @@
     private void SelectPDF(RiskAssesmentPDF risk)
     {
         var data = risk.PDF;
-        // pdfContent = "data:application/pdf;base64,";
         pdfContent = System.Convert.ToBase64String(data);
         StateHasChanged();
         jsRuntime.InvokeVoidAsync("base64ToArrayBuffer", pdfContent);
-
-
-    }
-
-    private void SelectAPIPDF(RiskAssesmentPDF risk)
-    {
-        var data = risk.PDF;
-        pdfContentAPI = "data:application/pdf;base64,";
-        pdfContentAPI += System.Convert.ToBase64String(data);
-        jsRuntime.InvokeVoidAsync("ShowPDF", risk.PDFName, pdfContent);
-        StateHasChanged();
     }
 
 
