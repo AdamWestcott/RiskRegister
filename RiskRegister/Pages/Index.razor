@@ -7,6 +7,8 @@
 @using System.IO
 @inject NavigationManager NavigationManager
 @using System.Web
+@using Radzen
+@using Radzen.Blazor
 
 <div style="float:left; margin-right:5px;">
     <label>Number</label>
@@ -21,7 +23,12 @@
 @*<button class="btn btn-success" style="float:left; margin-right:5px;" @onclick="AddNew">Add New</button>*@
 <br />
 <br />
-
+<div class="col-md-4 p-3" hidden="@HideProgressBar" id="ProgressBar">
+    @*<RadzenCard>*@
+        <h4 class="mb-4">File is being uploaded</h4>
+        <Radzen.Blazor.RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate"  />
+    @*</RadzenCard>*@
+</div>
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
@@ -35,30 +42,30 @@
     <tbody>
         @foreach (var risk in Risks)
         {
-        <tr>
-            <td>@risk.Number</td>
-            <td>@risk.Date.ToString("dd-MM-yyyy")</td>
-            <td>@risk.Value</td>
-            <td>@risk.PDFName</td>
-            <td>
-                @if (risk.PDF == null)
-                {
-                    @*<BlazorInputFile.InputFile accept=".pdf" OnChange="@(e => HandleFileSelected(e, @risk.Id))" />*@
-                    <button class="btn btn-primary" onclick="document.getElementById('picker').click()">Choose PDF File</button>
-                    <BlazorInputFile.InputFile id="picker" OnChange="@(e=> HandleFileSelected(e,@risk.Id))" accept=".pdf" hidden></BlazorInputFile.InputFile>
-                }
-                @if (risk.PDF != null)
-                {
-                    <button class="btn btn-primary" @onclick="@(e=> DeletePDF(@risk))">Delete PDF</button>
-                    <button class="btn btn-primary" @onclick="@(e=> SelectPDF(@risk))">View PDF</button>
-                    <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
-                }
-                else
-                {
-                    <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
-                }
+            <tr>
+                <td>@risk.Number</td>
+                <td>@risk.Date.ToString("dd-MM-yyyy")</td>
+                <td>@risk.Value</td>
+                <td>@risk.PDFName</td>
+                <td>
+                    @if (risk.PDF == null)
+                    {
+                        @*<BlazorInputFile.InputFile accept=".pdf" OnChange="@(e => HandleFileSelected(e, @risk.Id))" />*@
+                        <button class="btn btn-primary" onclick="document.getElementById('picker').click()">Choose PDF File</button>
+                        <BlazorInputFile.InputFile id="picker" OnChange="@(e=> HandleFileSelected(e,@risk.Id))" accept=".pdf" hidden></BlazorInputFile.InputFile>
+                    }
+                    @if (risk.PDF != null)
+                    {
+                        <button class="btn btn-primary" @onclick="@(e=> DeletePDF(@risk))">Delete PDF</button>
+                        <button class="btn btn-primary" @onclick="@(e=> SelectPDF(@risk))">View PDF</button>
+                        <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
+                    }
 
-            </td>
+                </td>
             </tr>
         }
     </tbody>
@@ -66,11 +73,12 @@
 
 </table>
 
+<br />
 @*@if (!string.IsNullOrEmpty(pdfContent))
-{*@
-    @*<embed src="@pdfContent" width="1300px" height="2100px" />*@
-    <iframe style="visibility: hidden" id="myFrame" width="1300px" height="900px" />
-    @*<object data="@placeholder" width="1300px." height="2100px" type="application/pdf"></object>*@
+    {*@
+@*<embed src="@pdfContent" width="1300px" height="2100px" />*@
+<iframe style="visibility: hidden" id="myFrame" width="1300px" height="900px" />
+@*<object data="@placeholder" width="1300px." height="2100px" type="application/pdf"></object>*@
 @*}*@
 
 
@@ -85,10 +93,12 @@
     string pdfName = "";
     string pdfContent = "";
     byte[] a;
+    private bool HideProgressBar { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
     {
         getAllRiskAssesmentPDFS();
+
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -117,11 +127,15 @@
 
     async void HandleFileSelected(IFileListEntry[] files, int riskAssesmentID)
     {
+        HideProgressBar = false;
+        StateHasChanged();
         var attach = await FileSender(files.FirstOrDefault());
         pdfName = files.FirstOrDefault().Name.ToString();
         PDFService.uploadRiskAssesmentPDF(riskAssesmentID, attach, pdfName);
         StateHasChanged();
         getAllRiskAssesmentPDFS();
+        HideProgressBar = true;
+        StateHasChanged();
     }
 
     public async Task<byte[]> FileSender(IFileListEntry file)
@@ -164,13 +178,17 @@
     //    getAllRiskAssesmentPDFS();
     //}
 
-    private void SelectPDF(RiskAssesmentPDF risk)
+    async void SelectPDF(RiskAssesmentPDF risk)
     {
+        HideProgressBar = false;
+        StateHasChanged();
         var data = risk.PDF;
         pdfContent = System.Convert.ToBase64String(data);
         StateHasChanged();
         a = risk.PDF;
-        jsRuntime.InvokeVoidAsync("base64ToArrayBuffer", pdfContent);
+        await jsRuntime.InvokeVoidAsync("base64ToArrayBuffer", pdfContent);
+        HideProgressBar = true;
+        StateHasChanged();
     }
 
 

@@ -12,6 +12,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <ApplicationIcon />
+    <OutputType>WinExe</OutputType>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="wwwroot\ReportViewer\**" />
@@ -31,6 +34,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.0" />
     <PackageReference Include="MySql.Data" Version="8.0.27" />
+    <PackageReference Include="Radzen.Blazor" Version="3.13.7" />
     <!--The following lines are replaced with package refs during the product build-->
   </ItemGroup>
   <ItemGroup>
