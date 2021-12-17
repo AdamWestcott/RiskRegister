@@ -29,31 +29,36 @@
             <th>Date</th>
             <th>Value</th>
             <th>PDF Name</th>
-            <th>Upload</th>
             <th>Action</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var risk in Risks)
         {
-            <tr>
-                <td>@risk.Number</td>
-                <td>@risk.Date.ToString("dd-MM-yyyy")</td>
-                <td>@risk.Value</td>
-                <td>@risk.PDFName</td>
-                <td>
-                    <BlazorInputFile.InputFile accept=".pdf" OnChange="@(e=> HandleFileSelected(e,@risk.Id))" />
-                    @*<button onclick="document.getElementById('picker').click()">Choose Text File</button>
-                        <BlazorInputFile.InputFile id="picker" OnChange="@(e=> HandleFileSelected(e,@risk.Id))" accept=".pdf" hidden></BlazorInputFile.InputFile>*@
-                </td>
-                <td>
-                    @if (risk.PDF != null)
-                    {
-                        <button class="btn btn-primary" @onclick="@(e=> DeletePDF(@risk.Id))">Delete PDF</button>
-                        <button class="btn btn-primary" @onclick="@(e=> SelectPDF(@risk))">View PDF</button>
-                    }
-                    <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk.Id))">Delete Item</button>
-                </td>
+        <tr>
+            <td>@risk.Number</td>
+            <td>@risk.Date.ToString("dd-MM-yyyy")</td>
+            <td>@risk.Value</td>
+            <td>@risk.PDFName</td>
+            <td>
+                @if (risk.PDF == null)
+                {
+                    @*<BlazorInputFile.InputFile accept=".pdf" OnChange="@(e => HandleFileSelected(e, @risk.Id))" />*@
+                    <button class="btn btn-primary" onclick="document.getElementById('picker').click()">Choose PDF File</button>
+                    <BlazorInputFile.InputFile id="picker" OnChange="@(e=> HandleFileSelected(e,@risk.Id))" accept=".pdf" hidden></BlazorInputFile.InputFile>
+                }
+                @if (risk.PDF != null)
+                {
+                    <button class="btn btn-primary" @onclick="@(e=> DeletePDF(@risk))">Delete PDF</button>
+                    <button class="btn btn-primary" @onclick="@(e=> SelectPDF(@risk))">View PDF</button>
+                    <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
+                }
+                else
+                {
+                    <button class="btn btn-primary" @onclick="@(e=> DeleteItem(@risk))">Delete Item</button>
+                }
+
+            </td>
             </tr>
         }
     </tbody>
@@ -64,7 +69,7 @@
 @*@if (!string.IsNullOrEmpty(pdfContent))
 {*@
     @*<embed src="@pdfContent" width="1300px" height="2100px" />*@
-    <iframe id="myFrame" width="1300px" height="900px" />
+    <iframe style="visibility: hidden" id="myFrame" width="1300px" height="900px" />
     @*<object data="@placeholder" width="1300px." height="2100px" type="application/pdf"></object>*@
 @*}*@
 
@@ -79,6 +84,7 @@
     List<RiskAssesmentPDF> Risks = new List<RiskAssesmentPDF>();
     string pdfName = "";
     string pdfContent = "";
+    byte[] a;
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,7 +93,6 @@
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        jsRuntime.InvokeVoidAsync("HideShowIframe");
         return base.OnAfterRenderAsync(firstRender);
 
     }
@@ -106,6 +111,7 @@
     {
         PDFService.Save(riskPdf);
         riskPdf = new RiskAssesmentPDF();
+        StateHasChanged();
         getAllRiskAssesmentPDFS();
     }
 
@@ -114,6 +120,7 @@
         var attach = await FileSender(files.FirstOrDefault());
         pdfName = files.FirstOrDefault().Name.ToString();
         PDFService.uploadRiskAssesmentPDF(riskAssesmentID, attach, pdfName);
+        StateHasChanged();
         getAllRiskAssesmentPDFS();
     }
 
@@ -127,16 +134,25 @@
 
     }
 
-    private void DeletePDF(int PDFID)
+    private async Task DeletePDF(RiskAssesmentPDF risk)
     {
-        PDFService.DeletePDF(PDFID);
+        if (a == risk.PDF)
+        {
+            await jsRuntime.InvokeVoidAsync("HideIframeOnDelete");
+        }
+        PDFService.DeletePDF(risk.Id);
+        StateHasChanged();
         getAllRiskAssesmentPDFS();
     }
 
-    private async Task DeleteItem(int PDFID)
+    private async Task DeleteItem(RiskAssesmentPDF risk)
     {
-        await PDFService.DeleteObject(PDFID);
-        await jsRuntime.InvokeVoidAsync("HideIframeOnDelete");
+        if (a == risk.PDF)
+        {
+            await jsRuntime.InvokeVoidAsync("HideIframeOnDelete");
+        }
+        await PDFService.DeleteObject(risk.Id);
+        StateHasChanged();
         getAllRiskAssesmentPDFS();
     }
 
@@ -153,6 +169,7 @@
         var data = risk.PDF;
         pdfContent = System.Convert.ToBase64String(data);
         StateHasChanged();
+        a = risk.PDF;
         jsRuntime.InvokeVoidAsync("base64ToArrayBuffer", pdfContent);
     }
 

@@ -11,25 +11,16 @@ function base64ToArrayBuffer(base64) {
     //Convert blob into URL Object
     blob = window.URL.createObjectURL(blob);
     var x = document.getElementById("myFrame");
-    if (x.style.display === "block") {
-        x.style.display = "none";
+    if (x.style.visibility == "hidden") {
+        x.style.visibility = "visible";
     }
     document.getElementById("myFrame").src = blob + "#toolbar=0";
 }
 
-function HideShowIframe() {
-    var x = document.getElementById("myFrame");
-    if (x.style.display == "none") {
-        x.style.display = "block";
-    } else {
-        x.style.display = "none";
-    }
-}
-
 function HideIframeOnDelete() {
     var x = document.getElementById("myFrame");
-    if (x.style.display == "none") {
-        x.style.display = "block";
+    if (x.style.visibility == "visible") {
+        x.style.visibility = "hidden";
     }
 }
 
